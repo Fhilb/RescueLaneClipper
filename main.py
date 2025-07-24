@@ -52,7 +52,7 @@ if __name__ == "__main__":
             break
 
         # Process Frame
-        frameProc = FrameProcessor(frame.frame, all_detected_plates, ocrModel, yoloModel, config)
+        frameProc = FrameProcessor(frame.getFrame(), all_detected_plates, ocrModel, yoloModel, config)
         plates, previewImage = frameProc.processFrame()
         last_plates.append(plates)
 

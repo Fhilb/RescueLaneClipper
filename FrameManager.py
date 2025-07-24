@@ -1,6 +1,6 @@
 from collections import deque
 from configparser import ConfigParser
-import threading, os, cv2, time, datetime, serial
+import threading, os, cv2, time, datetime, serial, numpy as np
 
 
 class FrameManager(threading.Thread):
@@ -165,13 +165,21 @@ class FrameManager(threading.Thread):
 
 class Frame:
     def __init__(self, frame, frameID):
-        self.frame = frame.copy()
+        self.compressedFrame = self._compressFrame(frame, 95)
         self.frameID = frameID
 
         self.longitude = None
         self.latitude = None
 
         self.creationTime = datetime.datetime.now()
+
+    def _compressFrame(self, frame, quality=80):
+        _, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
+        return encoded.tobytes()
+
+    def getFrame(self):
+        jpeg_array = np.frombuffer(self.compressedFrame, dtype=np.uint8)
+        return cv2.imdecode(jpeg_array, cv2.IMREAD_COLOR)
 
 class FrameStorage:
     def __init__(self, config, plate, previewImage=None):
@@ -247,10 +255,11 @@ class FrameStorage:
             # Add timestamp and optional location data to the frames
             updatedFrames = []
             counter = 1
+            frame: Frame
             for frame in frames:
                 datetime_str = frame.creationTime.strftime("%d.%m.%Y, %H:%M:%S,%f")
                 datetime_str = datetime_str[:-3]  # chop of last digits of milliseconds
-                copiedFrame = frame.frame.copy()  # Important to copy the original frame, as the original gets shared over multiple video sequences that have overlapping timelines
+                copiedFrame = frame.getFrame().copy()  # Important to copy the original frame, as the original gets shared over multiple video sequences that have overlapping timelines
                 self._draw_timestamp(copiedFrame, datetime_str, counter, frame.longitude, frame.latitude)
                 updatedFrames.append(copiedFrame)
                 counter += 1
