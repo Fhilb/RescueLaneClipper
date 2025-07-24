@@ -2,7 +2,7 @@ import cv2, Levenshtein, ast
 from configparser import ConfigParser
 
 class FrameProcessor:
-    def __init__(self, frame: cv2.Mat, allDetectedPlates: list[str], ocrModel, yoloModel, config):
+    def __init__(self, frame: cv2.Mat, allDetectedPlates: list[str], ocrModel, yoloModel, config, whitelist):
         self.frame: cv2.Mat = frame
         self.allDetectedPlates: list[str] = allDetectedPlates
 
@@ -10,6 +10,7 @@ class FrameProcessor:
         self.yoloModel = yoloModel
 
         self.config: ConfigParser = config
+        self.whitelist: list[str] = whitelist
 
     def _findNumberPlates(self):
         """Tries to find all number plates in the image via YOLO and returns a List of all parts of the image
@@ -43,16 +44,28 @@ class FrameProcessor:
                         if self.config.getboolean("PreviewImage", "EnableText"):
                             cv2.putText(plottedImage, filteredPlate, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, textColor, 1)
                     plates.append(filteredPlate)
-                    print(filteredPlate)
+
         plateResult = []
         for plate in plates:
-            res = self._findSimilarPlate(plate)
+            if self._isPlateWhitelisted(plate):
+                continue
+            res = self._findSimilarPlate(plate, self.config.getfloat("Algorithm", "LevenshteinThreshold"))
             if res is None:
+                print(plate)
                 plateResult.append(plate)
             else:
+                print(res)
                 plateResult.append(res)
         return plateResult, plottedImage
-    
+
+    def _isPlateWhitelisted(self, currentPlate, threshold=0.8):
+        for whitelistName in self.whitelist:
+            ratio = Levenshtein.ratio(currentPlate, whitelistName)
+            if ratio > threshold:
+                print("[whitelisted]", whitelistName)
+                return True
+        return False
+
     def _findSimilarPlate(self, currentPlate, threshold=0.8):
         bestMatch = None
         bestRatio = 0.0

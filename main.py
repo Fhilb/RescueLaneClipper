@@ -1,4 +1,4 @@
-import time
+import time, os
 from ultralytics import YOLO
 from fast_plate_ocr import LicensePlateRecognizer
 from collections import defaultdict, deque
@@ -15,6 +15,14 @@ if __name__ == "__main__":
     ocrModel = LicensePlateRecognizer(config["FrameProcessor"]["OCRModel"]) # type: ignore
     yoloModel = YOLO(config["FrameProcessor"]["YOLOModel"], verbose=False)
 
+    whitelist = []
+    if os.path.exists("./whitelist.txt"):
+        with open("./whitelist.txt") as f:
+            for line in f.read().splitlines():
+                formattedLine = line.replace(" ", "")
+                whitelist.append(formattedLine)
+
+    print("whitelist:", whitelist)
 
     # Warm-up yoloModel with dummy frame
     # more on this issue: https://github.com/ultralytics/ultralytics/issues/14332#issuecomment-2221024314
@@ -52,7 +60,7 @@ if __name__ == "__main__":
             break
 
         # Process Frame
-        frameProc = FrameProcessor(frame.getFrame(), all_detected_plates, ocrModel, yoloModel, config)
+        frameProc = FrameProcessor(frame.getFrame(), all_detected_plates, ocrModel, yoloModel, config, whitelist)
         plates, previewImage = frameProc.processFrame()
         last_plates.append(plates)
 

@@ -11,7 +11,7 @@ Unlike a typical dashcam, this project is not build to detect crashes, but detec
 
 The project analyzes frames, detects number plates, reads the number plates with OCR and evaluates if the number plate got scanned before. The project can be customized through a config.ini file and uses basic logic like a Levenshtein ratio to tackle wrong OCR.
 
-The finished project is planned to feature a open-source list of parts, 3D print files and more to rebuild and refine the project at home.
+The finished project is planned to feature an open-source list of parts, 3D print files and more to rebuild and refine the project at home.
 
 > [!NOTE]  
 > This project is actively being developed and is not yet feature-complete. Expect changes, improvements, and new functionality over time. Feedback and contributions are welcome!
@@ -44,9 +44,18 @@ You will need Python3 and pip for this project.
 - run the program: `python main.py`
   - You should see some output: "Warming up YOLO Model... Warm-up finished!"
 
+## Whitelisting
+It might be useful to have certain number plates ignored by the system, for example other rescue vehicles.
+Therefore, a whitelist.txt file can be created in the main project folder. Each line inside this file is one number plate.
+The system checks against each value in this list and ignores it, shown by a "[whitelisted]" tag in the consoles output.
+
+You can also set a custom Levenshtein ratio for this check (LevenshteinThresholdWhitelist) to make sure that the whitelist works properly.
+
+If the whitelist is not used, the .txt file may be deleted. 
+
 > [!NOTE]  
 > As this project is actively being developed, currently it does not yet accept a webcams livestream! It uses example videos like [this one](https://www.youtube.com/watch?v=M6Rtz2CiY2c).
-> The video can be downloaded via 3D Youtube Downloader and is expected to be under the path "./tests/insideView.mp4".
+> The video can be downloaded via 3D YouTube Downloader and is expected to be under the path "./tests/insideView.mp4".
 
  ## Milestones
 - [x] Split Video Stream and Processing in different Threads
@@ -54,6 +63,7 @@ You will need Python3 and pip for this project.
 - [x] Implement config.ini file
 - [x] Add Pre- and PostRecording times to the video output
 - [x] Implement GPS positioning
+- [x] Add Whitelist to disable detection for other rescue vehicles
 - [ ] Optimize RAM usage (temporary saved frames take up lots of space right now)
 - [ ] Find a good solution to distribute the evidence (E-Mail, SFTP Server, etc.)
 - [ ] Give an Option for manual capture
