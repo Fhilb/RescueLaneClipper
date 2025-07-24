@@ -56,6 +56,7 @@ You will need Python3 and pip for this project.
 - [x] Implement GPS positioning
 - [ ] Optimize RAM usage (temporary saved frames take up lots of space right now)
 - [ ] Find a good solution to distribute the evidence (E-Mail, SFTP Server, etc.)
+- [ ] Give an Option for manual capture
 - [ ] Build Hardware Prototype
 - [ ] Provide Build Instructions
 - [ ] Add solutions to detect if the siren and emergency lights are active; display it in the frame
