@@ -53,7 +53,7 @@ You will need Python3 and pip for this project.
 - [x] Add Timestamps to the video output
 - [x] Implement config.ini file
 - [x] Add Pre- and PostRecording times to the video output
-- [ ] Implement GPS positioning
+- [x] Implement GPS positioning
 - [ ] Find a good solution to distribute the evidence (E-Mail, SFTP Server, etc.)
 - [ ] Build Hardware Prototype
 - [ ] Provide Build Instructions
