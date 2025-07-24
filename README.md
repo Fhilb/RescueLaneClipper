@@ -53,6 +53,7 @@ You will need Python3 and pip for this project.
 - [ ] Find a good solution to distribute the evidence (E-Mail, SFTP Server, etc.)
 - [ ] Build Hardware Prototype
 - [ ] Provide Build Instructions
+- [ ] Add solutions to detect if the siren and emergency lights are active; display it in the frame
 - [ ] 3D Print Case and provide files
 
 ## How it works
