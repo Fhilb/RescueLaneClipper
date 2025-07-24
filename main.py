@@ -7,18 +7,6 @@ from FrameManager import FrameManager, FrameStorage, Frame
 from configparser import ConfigParser
 import numpy as np
 
-# Open Video Stream for Processing # TODO replace with live feed
-#video_path = "./tests/insideView.mp4"
-#cap = cv2.VideoCapture(video_path)
-
-# if not cap.isOpened():
-#     print("Error opening video file")
-#    exit()
-
-#frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-#fps = cap.get(cv2.CAP_PROP_FPS)
-#duration_sec = frame_count / fps
-
 if __name__ == "__main__":
     config = ConfigParser()
     config.read("config.ini")
@@ -39,7 +27,6 @@ if __name__ == "__main__":
     processed_frames = 0
 
     detection_threshold = int(config["Algorithm"]["DetectionThreshold"])  # How many times does the number plate have to be detected in the last queuedFrames time period to be collected?
-
     last_plates = deque(maxlen=int(config["Algorithm"]["LastPlatesFrameStorageLength"]))  # store plates of the last x frames (x = maxlen)
 
     all_detected_plates = []
@@ -54,7 +41,6 @@ if __name__ == "__main__":
 
     while True:
         frame: Frame = fm.getCurrentFrame()
-        frames: list[Frame] = fm.getLastFrames()
 
         if frame is None:
             continue  # End of video
@@ -64,14 +50,18 @@ if __name__ == "__main__":
 
         if not fm.running:
             break
+
+        # Process Frame
         frameProc = FrameProcessor(frame.frame, all_detected_plates, ocrModel, yoloModel, config)
         plates, previewImage = frameProc.processFrame()
         last_plates.append(plates)
+
 
         for plate in plates:
             if plate not in all_detected_plates:
                 all_detected_plates.append(plate)
 
+        # Group the plates that got detected to get its frequency in the last x analyzed frames
         plate_indexes = defaultdict(list)
         for idx, frame_detections in enumerate(last_plates):
             for plate in frame_detections:
@@ -102,6 +92,7 @@ if __name__ == "__main__":
                 tmpDict.pop(key)
         temporaryFrameStorage = tmpDict
 
+    # When while loop got broken, finalize all not saved FrameStorage objects
     for key, frameStorage in temporaryFrameStorage.items():
         frameStorage.createVideo(resultDir + key + "/", fm.getFPS())
 

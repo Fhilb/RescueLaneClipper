@@ -22,7 +22,7 @@ class FrameManager(threading.Thread):
         self.startTime = 0
         self.lastFrameTime = 0
 
-        self.video_path = "./tests/insideView3.mp4"
+        self.video_path = "./tests/insideView.mp4"
 
     def run(self):
         cap = cv2.VideoCapture(self.video_path)
