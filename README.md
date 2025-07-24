@@ -64,7 +64,7 @@ If the whitelist is not used, the .txt file may be deleted.
 - [x] Add Pre- and PostRecording times to the video output
 - [x] Implement GPS positioning
 - [x] Add Whitelist to disable detection for other rescue vehicles
-- [ ] Optimize RAM usage (temporary saved frames take up lots of space right now)
+- [x] Optimize RAM usage (temporary saved frames take up lots of space right now)
 - [ ] Find a good solution to distribute the evidence (E-Mail, SFTP Server, etc.)
 - [ ] Give an Option for manual capture
 - [ ] Build Hardware Prototype
