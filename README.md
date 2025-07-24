@@ -54,7 +54,7 @@ You will need Python3 and pip for this project.
 - [x] Implement config.ini file
 - [x] Add Pre- and PostRecording times to the video output
 - [x] Implement GPS positioning
-- [ ] Optimize RAM usage (temporary saved frames take up lots of space right now)
+- [x] Optimize RAM usage (temporary saved frames take up lots of space right now)
 - [ ] Find a good solution to distribute the evidence (E-Mail, SFTP Server, etc.)
 - [ ] Give an Option for manual capture
 - [ ] Build Hardware Prototype
