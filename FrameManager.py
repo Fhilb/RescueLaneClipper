@@ -1,6 +1,6 @@
 from collections import deque
 from configparser import ConfigParser
-import threading, os, cv2, time, datetime
+import threading, os, cv2, time, datetime, serial
 
 
 class FrameManager(threading.Thread):
@@ -15,6 +15,15 @@ class FrameManager(threading.Thread):
         self.streamWidth = config["FrameManager"]["Width"]
         self.streamHeight = config["FrameManager"]["Height"]
 
+        self.gpsAllowed = config.getboolean("Setup", "EnableGPS")
+        if self.gpsAllowed:
+            try:
+                self.gps = serial.Serial("/dev/ttyACM0", baudrate=9600)  # Note: this method only works on raspberry pi!
+            except:
+                self.gps = None
+        else:
+            self.gps = None
+
         self.frames = deque(maxlen=int(self.fps * float(self.config["FrameManager"]["TemporaryStorageTime"])))
         self.currentFrame: Frame = None
         self.currentFrameID = 0
@@ -23,6 +32,31 @@ class FrameManager(threading.Thread):
         self.lastFrameTime = 0
 
         self.video_path = "./tests/insideView.mp4"
+
+    #TODO function not tested yet!
+    def getCoordinates(self):  # https://machinelearningsite.com/gps-data-in-raspberry-pi/
+        if self.gpsAllowed and self.gps is not None:
+            line = self.gps.readline()
+            decoded_line = line.decode('utf-8')
+            data = decoded_line.split(",")
+            try:
+                if data[0] == "$GPRMC":
+                    lat_nmea = str(data[3])
+                    dd = float(lat_nmea[:2])
+                    mmm = float(lat_nmea[2:])/60
+                    latitude = dd + mmm
+
+                    long_nmea = str(data[5])
+                    dd = float(long_nmea[:3])
+                    mmm = float(long_nmea[3:])/60
+                    longitude = dd + mmm
+                    return longitude, latitude
+                else:
+                    return 0, 0
+            except:
+                return 0, 0
+        else:
+            return 0, 0
 
     def run(self):
         cap = cv2.VideoCapture(self.video_path)
@@ -45,6 +79,11 @@ class FrameManager(threading.Thread):
             #cv2.waitKey(1)
 
             frame = Frame(frame, self.currentFrameID)
+            if self.gpsAllowed:
+                longitude, latitude = self.getCoordinates()
+                frame.longitude = longitude
+                frame.latitude = latitude
+
             with self.lock:
                 self.currentFrame = frame
                 self.frames.append(frame)
@@ -128,13 +167,19 @@ class Frame:
     def __init__(self, frame, frameID):
         self.frame = frame.copy()
         self.frameID = frameID
+
+        self.longitude = None
+        self.latitude = None
+
         self.creationTime = datetime.datetime.now()
 
 class FrameStorage:
-    def __init__(self, config, previewImage=None):
+    def __init__(self, config, plate, previewImage=None):
         self.frames: list[Frame] = []
         self.config: ConfigParser = config
+        self.plateNumber = plate
         self.previewImage = previewImage
+        self.creationTime = time.time()  # Used to track the MaximumClipTime
         self.lastSeen = time.time()  # Used to track the PostRecordingTime; reset when the number plate gets detected again
 
     def addFrame(self, frame):
@@ -147,7 +192,7 @@ class FrameStorage:
         process = threading.Thread(target=self._workerCreateVideo, args=(self.frames, self.previewImage, path, fps,))
         process.start()
 
-    def _draw_timestamp(self, frame, datetimeStr, frameNumber):
+    def _draw_timestamp(self, frame, datetimeStr, frameNumber, latitude=None, longitude=None):
         overlay_text = f"{datetimeStr} | Frame: {frameNumber:04d}"
 
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -183,6 +228,20 @@ class FrameStorage:
                     font_thickness,
                     cv2.LINE_AA)
 
+        if latitude is not None and longitude is not None:
+            coord_text = f"Lat.: {latitude:.6f} | Long.: {longitude:.6f}"
+            coord_size, _ = cv2.getTextSize(coord_text, font, font_scale, font_thickness)
+            coord_width, coord_height = coord_size
+
+            coord_x_start = 0
+            coord_y_start = frame.shape[0] - coord_height - padding * 2
+            coord_x_end = coord_width + padding * 2
+            coord_y_end = frame.shape[0]
+
+            cv2.rectangle(frame, (coord_x_start, coord_y_start), (coord_x_end, coord_y_end), (0, 0, 0), thickness=-1)
+            cv2.putText(frame, coord_text, (coord_x_start + padding, coord_y_end - padding),
+                        font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+
     def _workerCreateVideo(self, frames: list, previewImage, path, fps):
         if len(frames) > 0:
             # Add timestamp and optional location data to the frames
@@ -192,7 +251,7 @@ class FrameStorage:
                 datetime_str = frame.creationTime.strftime("%d.%m.%Y, %H:%M:%S,%f")
                 datetime_str = datetime_str[:-3]  # chop of last digits of milliseconds
                 copiedFrame = frame.frame.copy()  # Important to copy the original frame, as the original gets shared over multiple video sequences that have overlapping timelines
-                self._draw_timestamp(copiedFrame, datetime_str, counter)
+                self._draw_timestamp(copiedFrame, datetime_str, counter, frame.longitude, frame.latitude)
                 updatedFrames.append(copiedFrame)
                 counter += 1
 

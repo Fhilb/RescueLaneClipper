@@ -72,7 +72,7 @@ if __name__ == "__main__":
         if len(duplicates) > 0:
             for plate, indexes in duplicates.items():
                 if plate not in temporaryFrameStorage:  # If not yet known, create a new FrameStorage for a new clip
-                    temporaryFrameStorage[plate] = FrameStorage(config, previewImage)
+                    temporaryFrameStorage[plate] = FrameStorage(config, plate, previewImage)
                     temporaryFrameStorage[plate].addFrames(fm.getLastFrames(config.getint("OutputVideo", "PreRecordingTime")))  # add the right amount of frames before
                 else:
                     storage = temporaryFrameStorage[plate]
@@ -86,10 +86,15 @@ if __name__ == "__main__":
         # Check if temporary Storage holds values that are older
         tmpDict = temporaryFrameStorage.copy()  # Because you can't pop values while iterating through the dict, we copy the original, pop from the copy and replace the original after iterating
         for key, value in temporaryFrameStorage.items():
-            if not key in duplicates:
+            if not key in duplicates or (time.time() - value.creationTime) > (config.getint("OutputVideo", "MaximumClipTime") - config.getint("OutputVideo", "PreRecordingTime")):
                 path = resultDir + key + "/"
                 temporaryFrameStorage[key].createVideo(path, fm.getFPS())
                 tmpDict.pop(key)
+
+                # Iterate through last_plates and remove any number plate matches
+                for plates in last_plates:
+                    if value.plateNumber in plates:
+                        plates.remove(value.plateNumber)
         temporaryFrameStorage = tmpDict
 
     # When while loop got broken, finalize all not saved FrameStorage objects

@@ -25,16 +25,20 @@ You will need Python3 and pip for this project.
 - Change the directory to the folder where you want to put your future project: `cd /path/to/new/project/folder`
 - Create a new Python virtual environment in the folder:
   `python -m venv .venv`
+
+
 - Copy the following files into your new folder:
   - main.py
   - FrameManager.py
   - FrameProcessor.py
   - license_plate_detector.pt
   - config.ini
+  
+
 - Activate the virtual environment: `.venv\Scripts\activate.ps1` (Windows) or `source .venv/bin/activate` (Unix/macOS)
   - On Windows, you might have to enable Execution of RemoteSigned scripts before executing the .ps1 script: `Set-ExecutionPolicy RemoteSigned` (In a Powershell Admin Terminal)
   - You should see your prompt change to *(.venv) ...*
-- Install all external libraries: `pip install opencv-python Levenshtein fast_plate_ocr[onnx] ultralytics`
+- Install all external libraries: `pip install opencv-python Levenshtein fast_plate_ocr[onnx] ultralytics pyserial`
 
 ## Execution
 - run the program: `python main.py`
