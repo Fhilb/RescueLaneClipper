@@ -44,6 +44,10 @@ You will need Python3 and pip for this project.
 - run the program: `python main.py`
   - You should see some output: "Warming up YOLO Model... Warm-up finished!"
 
+> [!NOTE]  
+> As this project is actively being developed, currently it does not yet accept a webcams livestream! It uses example videos like [this one](https://www.youtube.com/watch?v=M6Rtz2CiY2c).
+> The video can be downloaded via 3D YouTube Downloader and is expected to be under the path "./tests/insideView.mp4".
+
 ## Whitelisting
 It might be useful to have certain number plates ignored by the system, for example other rescue vehicles.
 Therefore, a whitelist.txt file can be created in the main project folder. Each line inside this file is one number plate.
@@ -52,10 +56,6 @@ The system checks against each value in this list and ignores it, shown by a "[w
 You can also set a custom Levenshtein ratio for this check (LevenshteinThresholdWhitelist) to make sure that the whitelist works properly.
 
 If the whitelist is not used, the .txt file may be deleted. 
-
-> [!NOTE]  
-> As this project is actively being developed, currently it does not yet accept a webcams livestream! It uses example videos like [this one](https://www.youtube.com/watch?v=M6Rtz2CiY2c).
-> The video can be downloaded via 3D YouTube Downloader and is expected to be under the path "./tests/insideView.mp4".
 
  ## Milestones
 - [x] Split Video Stream and Processing in different Threads
