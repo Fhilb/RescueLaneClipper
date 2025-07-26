@@ -40,6 +40,8 @@ You will need Python3, pip and wget for this project.
   - You should see your prompt change to *(.venv) ...*
 - Install all external libraries: `pip install opencv-python Levenshtein fast_plate_ocr[onnx] ultralytics pyserial tuspy py7zr`
 
+- Install pycamera2: `sudo apt update` and `sudo apt install python3-picamera2 -y`
+
 ## Execution
 - run the program: `python main.py`
   - You should see some output: "Warming up YOLO Model... Warm-up finished!"

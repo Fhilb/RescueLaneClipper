@@ -1,6 +1,7 @@
 from collections import deque
 from configparser import ConfigParser
 import threading, os, cv2, time, datetime, serial, numpy as np
+from picamera2 import Picamera2
 
 
 class FrameManager(threading.Thread):
@@ -14,6 +15,10 @@ class FrameManager(threading.Thread):
         self.fps = float(self.config["FrameManager"]["FPS"])
         self.streamWidth = config["FrameManager"]["Width"]
         self.streamHeight = config["FrameManager"]["Height"]
+
+        self.showVideoStream = config.getboolean("FrameManager", "ShowVideoStream")
+        self.streamingSource = config.get("FrameManager", "StreamingSource")
+        self.videoSource = config.get("FrameManager", "VideoSource")
 
         self.gpsAllowed = config.getboolean("Setup", "EnableGPS")
         if self.gpsAllowed:
@@ -59,38 +64,72 @@ class FrameManager(threading.Thread):
             return 0, 0
 
     def run(self):
-        cap = cv2.VideoCapture(self.video_path)
+        if self.streamingSource == "Video":
+            cap = cv2.VideoCapture(self.video_path)
 
-        self.startTime = time.time()
-        while self.running:
-            if not cap.isOpened():
-                print("Error opening video file")
-                self.stop()
-                break
+            self.startTime = time.time()
+            while self.running:
+                if not cap.isOpened():
+                    print("Error opening video file")
+                    self.stop()
+                    break
 
-            ret, frame = cap.read()
-            if not ret:
-                print("finished video.")
-                self.stop()  # No more frames, or error reading frame
-                break
+                ret, frame = cap.read()
+                if not ret:
+                    print("finished video.")
+                    self.stop()  # No more frames, or error reading frame
+                    break
 
-            # Optional: Display Stream Live in a separate window; for debugging purposes
-            #cv2.imshow('Monitor Stream', frame)
-            #cv2.waitKey(1)
+                if self.showVideoStream:
+                    # Optional: Display Stream Live in a separate window; for debugging purposes
+                    cv2.imshow('Monitor Stream', frame)
+                    cv2.waitKey(1)
 
-            frame = Frame(frame, self.currentFrameID)
-            if self.gpsAllowed:
-                longitude, latitude = self.getCoordinates()
-                frame.longitude = longitude
-                frame.latitude = latitude
+                frame = Frame(frame, self.currentFrameID)
+                if self.gpsAllowed:
+                    longitude, latitude = self.getCoordinates()
+                    frame.longitude = longitude
+                    frame.latitude = latitude
 
-            with self.lock:
-                self.currentFrame = frame
-                self.frames.append(frame)
-                self.currentFrameID += 1
-                self.lastFrameTime = time.time()
-            while time.time() - self.lastFrameTime < (1 / self.fps):  # Wait for next frame as long as needed (more accurate than time.sleep() as it accounts for any processing time)
-                pass
+                with self.lock:
+                    self.currentFrame = frame
+                    self.frames.append(frame)
+                    self.currentFrameID += 1
+                    self.lastFrameTime = time.time()
+                while time.time() - self.lastFrameTime < (1 / self.fps):  # Wait for next frame as long as needed (more accurate than time.sleep() as it accounts for any processing time)
+                    pass
+
+        elif self.streamingSource == "Camera":
+            picam2 = Picamera2()
+            config = picam2.create_video_configuration(
+                main={"size": (self.streamWidth, self.streamHeight), "format": "BGR888"},
+                controls={"FrameRate": self.fps}
+            )
+            picam2.configure(config)
+            picam2.start()
+
+            self.startTime = time.time()
+            while self.running:
+                frame = picam2.capture_array()
+
+                if self.showVideoStream:
+                    cv2.imshow("Pi Camera Stream", frame)
+                    cv2.waitKey(1)
+
+                frame = Frame(frame, self.currentFrameID)
+                if self.gpsAllowed:
+                    longitude, latitude = self.getCoordinates()
+                    frame.longitude = longitude
+                    frame.latitude = latitude
+
+                with self.lock:
+                    self.currentFrame = frame
+                    self.frames.append(frame)
+                    self.currentFrameID += 1
+                    self.lastFrameTime = time.time()
+
+                while time.time() - self.lastFrameTime < (1 / self.fps):
+                    pass
 
     def getFPS(self):
         """
