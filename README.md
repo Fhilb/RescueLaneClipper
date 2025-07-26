@@ -58,16 +58,15 @@ You can also set a custom Levenshtein ratio for this check (LevenshteinThreshold
 If the whitelist is not used, the .txt file may be deleted.
 
 ## Upload
-To upload the saved video files and images, we use [tus/tusd](https://tus.io/), as it has a few feature that we can make use of:
+To upload the saved video files and images, [tus/tusd](https://tus.io/) is used, as it has a few features that come in handy:
 - Simple installation and setup
 - Resumable uploads (if power got cut before fully uploading)
-- Simple user authentification to make sure that not everybody can upload to the server
 - Encryption of files isn't as simple with tus/tusd, so we rely on encrypting the files itself before sending them
 
-A second machine will be needed. In this project, a second Raspberry Pi with Raspbian
+A second machine will be needed. In this demo/tutorial, a second Raspberry Pi with Raspbian
 will be used. The following instructions use the terms "Client" (The Raspberry Pi inside the vehicle) and "Server" (The Raspberry Pi that gets uploaded to) as names for the respective machines.
 
-### Terminal on the server machine:
+### Command line on the server machine:
 #### Install tusd:
 - Download the zipped tusd folder: `wget https://github.com/tus/tusd/releases/download/v2.8.0/tusd_linux_arm.tar.gz`
 - Extract the archive: `tar -xzf tusd_linux_arm.tar.gz`
@@ -76,33 +75,33 @@ will be used. The following instructions use the terms "Client" (The Raspberry P
 - Move tusd binary to correct directoy: `sudo mv tusd /usr/local/bin/`
 - Create folder for uploads: `mkdir tus-uploads`
 
-You can verify that everything worked with:
-- `which tusd` should return `/usr/local/bin/tusd`
-- `tusd -version` should return:
+You can verify that everything works by issuing:
+- `which tusd`, should return `/usr/local/bin/tusd`
+- `tusd -version`, should return:
 ```
 Version: v2.8.0
 Commit: 0e52ad650abed02ec961353bb0c3c8bc36650d2c
 Date: Wed Apr  2 07:47:10 UTC 2025
 ```
 
-If everything is working as intended, you can remove your downloaded files with:
+If everything works as intended, you can remove your downloaded files with:
 - `cd ..` and 
 - `rm -rf tusd_linux_arm*`
 
 #### Install a firewall:
-A firewall should always be used, especially if we want our server to be accessible from external sources!
-- Update our packages list: `sudo apt update`
+A firewall should always be used, especially if you want your server to be accessible from external sources!
+- Update packages list: `sudo apt update`
 - Install firewall: `sudo apt install ufw`
 > [!NOTE]
-> Ports give access to different services on the same system, kind of like a corridor with lots of doors that are either locked or unlocked.
-> There are so called 'well-known ports' (port 0-1023) that are reserved for default services.
-> To make it a bit harder for possible intruders, we can choose a random port (1024-65535), as many port scans just check the well-known ports.
+> Ports give access to different services on the same system, similar to a corridor with lots of doors that are either locked or unlocked.
+> There are so called 'well-known ports' (port 0-1023) that are reserved for/ used by default services.
+> To make it a bit harder for possible intruders, we can choose a random port above those well-known ports (1024-65535), as many port scans just check the well-known ports.
 >
 > You can use a [random port generator](https://proxyscrape.com/tools/port) for this.
 > 
 > Please write your chosen port down somewhere, as you will need it later!
 
-- Add chosen port to firewall: `sudo ufw allow [your port]`, e.g. `sudo ufw allow 37859`
+- Add the chosen port to the firewall: `sudo ufw allow [your port]` (e.g. `sudo ufw allow 37859`)
 
 > [!NOTE]
 > If you use SSH or SFTP to access your server, make sure to add the port to the firewall as well (default is 22):
@@ -125,7 +124,7 @@ A firewall should always be used, especially if we want our server to be accessi
 
 #### Implementing tusd as a service:
 To autostart tus/tusd whenever the Raspberry Pi boots, we use systemd.
-- Get into the correct directory: `cd /etc/systemd/system/`
+- Change into the correct directory: `cd /etc/systemd/system/`
 - Create a new file: `sudo nano tusd.service`
 - Add the following lines to the file (change the port to your own!):
 ```
@@ -145,17 +144,17 @@ WantedBy=multi-user.target
 - Save the file with CTRL+O and press Enter
 - Close the file with CTRL+X
 - Set permissions for the file: `sudo chmod 644 /etc/systemd/system/tusd.service`
-- Reload systemctl daemon: `sudo systemctl daemon-reload`
-- Enable service: `sudo systemctl enable tusd.service`
-- Reboot server: `sudo reboot`
+- Reload the systemctl daemon: `sudo systemctl daemon-reload`
+- Enable the service: `sudo systemctl enable tusd.service`
+- Reboot the server: `sudo reboot`
 
-After rebooting, you should be able to test the service the same way you did in the [section above](#start-tusd-for-the-first-time).
+After rebooting, you should be able to test the service the same way you did in the [section above](#start-tusd-for-the-first-time) with curl.
 
-### Configuring the config.ini
-To make the upload work properly, you have to update your config.ini "Upload" section.
-- EnableUpload: If you want to upload to an external source, this has to be set to True
+### Configuring the config.ini on the Client
+To make the upload work properly, you have to update your config.ini "Upload" section on the client:
+- EnableUpload: If you want to use the upload feature, this has to be set to True
 - Server: The static IP or Dyn-DNS Address that your server uses
-- UploadPort: The port that you used in your port-forwarding
+- UploadPort: The port that you used in your port-forwarding/ the one you wrote down
 - EncryptionKey: All files that get uploaded will be encrypted with this key. Don't share this key if it runs in a production environment!
 
 > [!IMPORTANT]
@@ -163,6 +162,8 @@ To make the upload work properly, you have to update your config.ini "Upload" se
 > 
 > To view your uploaded content, download the file *without* .info at the end and open it with [7zip](https://www.7-zip.org/).
 > You will be prompted to insert your password. The password is your EncryptionKey.
+
+If the upload works, your results folder should clear over time when running the program and the "results/uploadFinished" folder should fill up with data.
 
  ## Milestones
 - [x] Split Video Stream and Processing in different Threads
