@@ -70,25 +70,9 @@ will be used. The following instructions use the terms "Client" (The Raspberry P
 
 ### Command line on the server machine:
 #### Install tusd:
-- Download the zipped tusd folder: `wget https://github.com/tus/tusd/releases/download/v2.8.0/tusd_linux_arm.tar.gz`
-- Extract the archive: `tar -xzf tusd_linux_arm.tar.gz`
-- Change directory into the extracted archive: `cd tusd_linux_arm`
-- Set correct permissions for file: `chmod +x tusd`
-- Move tusd binary to correct directoy: `sudo mv tusd /usr/local/bin/`
-- Create folder for uploads: `mkdir tus-uploads`
-
-You can verify that everything works by issuing:
-- `which tusd`, should return `/usr/local/bin/tusd`
-- `tusd -version`, should return:
-```
-Version: v2.8.0
-Commit: 0e52ad650abed02ec961353bb0c3c8bc36650d2c
-Date: Wed Apr  2 07:47:10 UTC 2025
-```
-
-If everything works as intended, you can remove your downloaded files with:
-- `cd ..` and 
-- `rm -rf tusd_linux_arm*`
+- Copy the *install_tusd.sh* file into your servers home directory
+- Make the script executable: `chmod +x install_tusd.sh`
+- Run the script: `./install_tusd.sh`
 
 #### Install a firewall:
 A firewall should always be used, especially if you want your server to be accessible from external sources!
