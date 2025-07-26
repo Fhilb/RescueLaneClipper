@@ -4,6 +4,7 @@ from fast_plate_ocr import LicensePlateRecognizer
 from collections import defaultdict, deque
 from FrameProcessor import FrameProcessor
 from FrameManager import FrameManager, FrameStorage, Frame
+from UploadManager import UploadManager
 from configparser import ConfigParser
 import numpy as np
 
@@ -46,6 +47,12 @@ if __name__ == "__main__":
 
     fm = FrameManager(config)
     fm.start()
+
+    uploadAllowed = config.getboolean("Upload", "EnableUpload")
+
+    if uploadAllowed:
+        um = UploadManager(config)
+        um.start()
 
     while True:
         frame: Frame = fm.getCurrentFrame()
@@ -109,10 +116,14 @@ if __name__ == "__main__":
     for key, frameStorage in temporaryFrameStorage.items():
         frameStorage.createVideo(resultDir + key + "/", fm.getFPS())
 
+
+
     endTime = time.time()
 
     processDuration = endTime - startTime
 
     fm.stop()
+    if uploadAllowed:
+        um.stop()
 
     print(f"\nProcessed {processed_frames} frames in {processDuration:.2f} seconds")
